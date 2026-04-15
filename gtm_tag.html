@@ -1,0 +1,91 @@
+<script>
+(function () {
+
+  // ← вставить домен после деплоя на Railway
+  var ENDPOINT = "https://YOUR-SERVICE.up.railway.app/pb.php";
+  var EVENT_NAME = "plr";
+  var BRAND_VALUE = "crwn";
+
+  var currencyDLV = {{DLV - currency}} || "INR";
+  var userIdDLV   = {{DLV - USER_ID}} || "";
+  var bonusIdDLV  = {{DLV - welcome_bonus}} || "";
+
+  function safe(v){ return v === null || v === undefined ? "" : String(v); }
+  function trim(v){ return safe(v).trim(); }
+
+  function getCurrentUrl(){
+    try{ return String(location.href); }catch(e){ return ""; }
+  }
+
+  function getParamFromUrl(name, urlStr){
+    try{
+      var u = new URL(String(urlStr || getCurrentUrl()), getCurrentUrl());
+      return u.searchParams.get(name) || "";
+    }catch(e){
+      var m = String(urlStr || getCurrentUrl()).match(new RegExp("[?&]" + name + "=([^&#]+)", "i"));
+      return m ? decodeURIComponent(m[1]) : "";
+    }
+  }
+
+  function getCookie(name){
+    try{
+      var m = document.cookie.match(
+        new RegExp('(?:^|; )' + name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g,'\\$&') + '=([^;]*)')
+      );
+      return m ? decodeURIComponent(m[1]) : "";
+    }catch(e){ return ""; }
+  }
+
+  function getLS(key){
+    try{ return localStorage.getItem(key) || ""; }catch(e){ return ""; }
+  }
+
+  function getFromAll(name){
+    var urlNow = getCurrentUrl();
+    return getParamFromUrl(name, urlNow) || getCookie(name) || getLS(name) || "";
+  }
+
+  function buildUrl(params){
+    var q=[];
+    for(var k in params){
+      if(!Object.prototype.hasOwnProperty.call(params,k)) continue;
+      q.push(encodeURIComponent(k)+"="+encodeURIComponent(safe(params[k])));
+    }
+    return ENDPOINT + "?" + q.join("&");
+  }
+
+  var rawSub3 = trim(getFromAll("sub_id3"));
+  var subId3 = /^hs[a-z0-9]{10,}/i.test(rawSub3) ? rawSub3 : "hs0000000000";
+
+  var params = {
+    event_name: EVENT_NAME,
+    of_id: trim(getFromAll("of_id")) || trim(getFromAll("offer_id")),
+    affiliate_id: trim(getFromAll("affiliate_id")) || trim(getFromAll("partner_id")) || trim(getFromAll("aff_id")),
+    currency: trim(currencyDLV).toUpperCase(),
+    brand: BRAND_VALUE,
+    sub_id1: trim(getFromAll("sub_id1")),
+    sub_id2: trim(getFromAll("sub_id2")),
+    sub_id3: subId3,
+    sub_id4: trim(bonusIdDLV) || trim(getFromAll("bonus_id")),
+    sub_id5: trim(getFromAll("vertical")),
+    sub_id6: "",
+    sub_id7: trim(getFromAll("sub_id7")),
+    sub_id8: trim(getFromAll("sub_id8")),
+    sub_id9: trim(getFromAll("sub_id9")),
+    sub_id10: trim(getFromAll("sub_id10")),
+    random: Math.floor(Math.random() * 1000000) + 1,
+    user_id: trim(userIdDLV) || trim(getFromAll("user_id")) || trim(getFromAll("custom1")),
+    pixel_placement: "prod",
+    auth_status: "true",
+    time: Math.floor(Date.now() / 1000),
+    ip: "",
+    ua: navigator.userAgent
+  };
+
+  try {
+    var img = new Image();
+    img.src = buildUrl(params);
+  } catch(e) {}
+
+})();
+</script>
