@@ -96,9 +96,22 @@ def health():
     return {"status": "ok", "log": log_file_path}, 200
 
 
+@app.route("/logs")
+def logs():
+    n = request.args.get("n", 50, type=int)
+    try:
+        with open(log_file_path, "r") as f:
+            lines = f.readlines()
+        events = [json.loads(l) for l in lines[-n:] if l.strip()]
+        events.reverse()  # последние сверху
+        return {"count": len(events), "events": events}, 200
+    except FileNotFoundError:
+        return {"count": 0, "events": []}, 200
+
+
 @app.route("/")
 def index():
-    return {"service": "event-tracker", "endpoints": ["/pb.php", "/track", "/health"]}, 200
+    return {"service": "event-tracker", "endpoints": ["/pb.php", "/track", "/health", "/logs?n=50"]}, 200
 
 
 if __name__ == "__main__":
